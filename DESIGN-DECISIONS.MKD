@@ -1,0 +1,458 @@
+# Problemas em aberto
+
+Para desmembrar o mural, vejo como pre-requisitos os pontos 1 e 2:
+
+1. Ability: responsável por verificar e alterar as habilidades de um usuário (autorização)
+2. Observer: responsável por propagar eventos importantes entre diversas aplicações. Por exemplo, criação de um curso.
+3. Wally: Mural do Redu ;)
+
+![](https://dl.dropbox.com/u/77225/arq.png)
+
+## Message bus
+
+Premissas:
+
+- Funcionar em frameworks e linguagens diferentes
+- Garantia de entrega
+- Fail safe
+- Assíncrono
+
+## Permit
+
+Responsável por armazenar e disponibilizar políticas (Policy) de acesso a vários serviços.
+
+- Funcionar em frameworks e linguagens diferentes
+- Fail safe
+- Acesso concorrente
+
+É compostos por dois componentes: cliente de inserção, cliente de consulta e servidor.
+
+### Servidor
+
+Responsável por servir e armazenar as políticas.
+
+- É dummy
+- Otimizado para leitura
+- Payload reduzido
+- Cache server side
+
+**Interface**
+
+```shell
+$ > curl -X HEAD 'http://0.0.0.0:9000/?action=read&resource_id=core_course_1&subject_id=core_user_1'
+```
+
+- HEAD, retorna 401 ou 200 para acesso permitido ou negado, respectivamente. Sem payload.
+- GET, retorna as políticas propriamente ditas
+
+### Cliente de consulta
+
+Responsável por consultar as políticas.
+
+- Caching client-side
+- Acesso paralelo
+
+```ruby
+require "permit_client"
+
+class Ability
+  include CanCan::Ability
+
+  def initialize(user)
+    permit = PermitClient.new(user.subject_id, :service_name => "wally")
+
+    can do |action, subject_class, subject|
+      permit.able_to?(action, subject.resource_id)
+    end
+  end
+end
+```
+
+### Cliente de inserção de políticas
+
+Responsável por inserir políticas no Permit.
+
+- Não bloqueante
+- Pode ser utilizado em várias linguagens
+- Garantia de entrega
+
+```
+class UserCourseAssociationPolicyObserver < ActiveRecord::Observer
+  observe UserCourseAssociation
+
+  def after_create(model)
+    role = model.role?(:environment_admin) ? { :manage => true } : { :read => true }
+    policy = {
+      :resource_id => "core_course_#{model.course.id}",
+      :subject_id => "core_user_#{model.user.id}",
+      :actions => role
+    }
+
+    deliver do |exchange, routing_key|
+      exchange.publish(policy.to_json, :routing_key => routing_key) do
+        EM.stop
+      end
+    end
+  end
+end
+```
+
+## Wally
+
+Responsável por renderizar o mural dentro do Redu.
+
+- Utilizar a API
+
+
+## Como propagar permissões através de mais de um projeto?
+
+Limitações:
+
+- Funcionar em frameworks e linguagens diferentes
+- Failsafe
+- Tempo de consulta constante
+- Otimizado para leitura
+- Felxível
+- Facilmente escalável (sem necessídade de alterar regras de negócio)
+
+### Alternativas:
+
+### 1. Dummy service
+
+Criar serviço "burro" cuja responsabilidade é armazenar e checar regras. As regras
+podem ter o seguinte formato:
+
+```
+entity_id      | permission
+core_course_1  | [ { user : 300, read : true, manage : false,  foo_bar : true  }, { user : 2, read : false, foo_bar : false } ]
+core_space_12  | [ { user : 2, read : true } ]
+```
+
+Exemplo de consulta (usando mongodb num banco com 1 mi de entradas e índices):
+
+```javascript
+> db.test.find({
+    entity_id : "core_course_1",
+    "permissions.user" : 200,
+    $or : [{ "permissions.manage" : true } , { "permissions.read" : true }]
+  })
+{
+	"cursor" : "BtreeCursor permissions.user_1_permissions.read_1",
+	"nscanned" : 1,
+	"nscannedObjects" : 1,
+	"n" : 1,
+	"millis" : 0,
+	"nYields" : 0,
+	"nChunkSkips" : 0,
+	"isMultiKey" : false,
+	"indexOnly" : false,
+	"indexBounds" : {
+		"permissions.user" : [
+			[
+				200,
+				200
+			]
+		],
+		"permissions.read" : [
+			[
+				{
+					"$minElement" : 1
+				},
+				{
+					"$maxElement" : 1
+				}
+			]
+		]
+	}
+}
+```
+
+A escolha do mongodb foi motivada pela economia de memória e facilidade em escalabilidade
+através de shardings. O Redis também foi avaliado e eliminado pelo alto consumo de memória.
+
+O log do HTTPerf está no anexo [1].
+
+#### Coisas que podem dar merda:
+
+- Qual é a complexidade de armazenamento (banco + índices)?
+- Como funciona o lock do mongo? É por processo? Por db? Por collection?
+- Ganho de performance de REST HTTP Vs. RPC
+
+### 2. Consulta a um grafo social da rede
+
+Ao invés de existir um serviço que centraliza as regras do sistema, um grafo
+social da rede poderia ser mantido. O serviço de permissão só precisaria
+consultar esse grafo social.
+
+Cada entidade seria responsável por definir suas próprias permissões através
+de uma query que seria executada no grafo social.
+
+## Como disoponibilziar o feed de atividades do usuário?
+
+- Otimizado para leitura
+	- Ser renderizado no cliente
+	- Cacheable
+- Facilmente escalável (sem necessídade de alterar regras de negócio)
+- Possibilitar composição de logs
+- Extensível para atualizações em tempo real
+- Seguir algum padrão já existente (por exemplo: http://activitystrea.ms/)
+
+Alternativas:
+
+- O mesmo código do mural atual rodando numa aplicação rails diferente.
+-
+
+
+## Anexo
+
+```
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=100 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 2
+
+Total: connections 1000 requests 1000 replies 1000 test-duration 9.993 s
+
+Connection rate: 100.1 conn/s (10.0 ms/conn, <=11 concurrent connections)
+Connection time [ms]: min 1.7 avg 4.4 max 104.8 median 2.5 stddev 7.3
+Connection time [ms]: connect 0.2
+Connection length [replies/conn]: 1.000
+
+Request rate: 100.1 req/s (10.0 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 100.0 avg 100.0 max 100.0 stddev 0.0 (1 samples)
+Reply time [ms]: response 2.4 transfer 1.8
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=1000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 4.73 system 5.25 (user 47.3% system 52.6% total 99.9%)
+Net I/O: 19.9 KB/s (0.2*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=200 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 7
+
+Total: connections 1000 requests 1000 replies 1000 test-duration 5.006 s
+
+Connection rate: 199.8 conn/s (5.0 ms/conn, <=16 concurrent connections)
+Connection time [ms]: min 1.7 avg 5.8 max 79.1 median 3.5 stddev 7.3
+Connection time [ms]: connect 0.6
+Connection length [replies/conn]: 1.000
+
+Request rate: 199.8 req/s (5.0 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 199.8 avg 199.8 max 199.8 stddev 0.0 (1 samples)
+Reply time [ms]: response 2.7 transfer 2.5
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=1000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 2.18 system 2.81 (user 43.6% system 56.2% total 99.8%)
+Net I/O: 39.8 KB/s (0.3*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=300 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 22
+
+Total: connections 1000 requests 1000 replies 1000 test-duration 3.360 s
+
+Connection rate: 297.6 conn/s (3.4 ms/conn, <=89 concurrent connections)
+Connection time [ms]: min 2.0 avg 49.0 max 377.5 median 13.5 stddev 70.1
+Connection time [ms]: connect 4.6
+Connection length [replies/conn]: 1.000
+
+Request rate: 297.6 req/s (3.4 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 23.5 transfer 20.9
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=1000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 1.06 system 2.30 (user 31.4% system 68.4% total 99.9%)
+Net I/O: 59.3 KB/s (0.5*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=400 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 9
+
+Total: connections 1000 requests 1000 replies 1000 test-duration 2.522 s
+
+Connection rate: 396.5 conn/s (2.5 ms/conn, <=28 concurrent connections)
+Connection time [ms]: min 2.5 avg 23.0 max 244.6 median 18.5 stddev 16.0
+Connection time [ms]: connect 3.3
+Connection length [replies/conn]: 1.000
+
+Request rate: 396.5 req/s (2.5 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 9.9 transfer 9.9
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=1000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.69 system 1.83 (user 27.3% system 72.6% total 99.9%)
+Net I/O: 79.0 KB/s (0.6*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=500 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 15
+
+Total: connections 1000 requests 1000 replies 1000 test-duration 2.097 s
+
+Connection rate: 476.8 conn/s (2.1 ms/conn, <=89 concurrent connections)
+Connection time [ms]: min 5.1 avg 91.3 max 323.7 median 90.5 stddev 42.8
+Connection time [ms]: connect 6.0
+Connection length [replies/conn]: 1.000
+
+Request rate: 476.8 req/s (2.1 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 37.8 transfer 47.5
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=1000 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.30 system 1.80 (user 14.1% system 85.8% total 100.0%)
+Net I/O: 95.0 KB/s (0.8*10^6 bps)
+
+Errors: total 0 client-timo 0 socket-timo 0 connrefused 0 connreset 0
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=600 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 23
+
+Total: connections 1000 requests 951 replies 949 test-duration 2.552 s
+
+Connection rate: 391.8 conn/s (2.6 ms/conn, <=254 concurrent connections)
+Connection time [ms]: min 5.7 avg 265.4 max 807.7 median 268.5 stddev 93.5
+Connection time [ms]: connect 7.3
+Connection length [replies/conn]: 1.000
+
+Request rate: 372.6 req/s (2.7 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 170.7 transfer 87.4
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=949 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.48 system 2.07 (user 18.7% system 81.2% total 99.8%)
+Net I/O: 74.2 KB/s (0.6*10^6 bps)
+
+Errors: total 51 client-timo 48 socket-timo 0 connrefused 0 connreset 3
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=700 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 47
+
+Total: connections 1000 requests 855 replies 850 test-duration 2.422 s
+
+Connection rate: 412.9 conn/s (2.4 ms/conn, <=315 concurrent connections)
+Connection time [ms]: min 4.8 avg 287.8 max 850.8 median 305.5 stddev 108.5
+Connection time [ms]: connect 14.3
+Connection length [replies/conn]: 1.000
+
+Request rate: 353.0 req/s (2.8 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 180.7 transfer 93.0
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=850 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.37 system 2.05 (user 15.4% system 84.6% total 99.9%)
+Net I/O: 70.1 KB/s (0.6*10^6 bps)
+
+Errors: total 150 client-timo 128 socket-timo 0 connrefused 0 connreset 22
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=800 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 183
+
+Total: connections 1000 requests 583 replies 581 test-duration 2.284 s
+
+Connection rate: 437.8 conn/s (2.3 ms/conn, <=621 concurrent connections)
+Connection time [ms]: min 1.9 avg 526.5 max 1017.2 median 449.5 stddev 303.9
+Connection time [ms]: connect 39.5
+Connection length [replies/conn]: 1.000
+
+Request rate: 255.2 req/s (3.9 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 311.5 transfer 189.6
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=581 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.31 system 1.97 (user 13.5% system 86.3% total 99.8%)
+Net I/O: 50.7 KB/s (0.4*10^6 bps)
+
+Errors: total 419 client-timo 325 socket-timo 0 connrefused 0 connreset 94
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=900 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 98
+
+Total: connections 1000 requests 693 replies 681 test-duration 2.111 s
+
+Connection rate: 473.7 conn/s (2.1 ms/conn, <=514 concurrent connections)
+Connection time [ms]: min 10.3 avg 379.8 max 955.0 median 383.5 stddev 145.4
+Connection time [ms]: connect 23.4
+Connection length [replies/conn]: 1.000
+
+Request rate: 328.3 req/s (3.0 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 229.5 transfer 127.9
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=681 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.31 system 1.80 (user 14.6% system 85.3% total 99.9%)
+Net I/O: 64.8 KB/s (0.5*10^6 bps)
+
+Errors: total 319 client-timo 280 socket-timo 0 connrefused 0 connreset 39
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+httperf --hog --timeout=1 --client=0/1 --server=192.168.1.17 --port=3000 --uri=/can/320000/read/core_course_1 --rate=1000 --send-buffer=4096 --recv-buffer=16384 --num-conns=1000 --num-calls=1
+Maximum connect burst length: 78
+
+Total: connections 1000 requests 616 replies 613 test-duration 2.004 s
+
+Connection rate: 499.1 conn/s (2.0 ms/conn, <=517 concurrent connections)
+Connection time [ms]: min 4.7 avg 323.8 max 684.3 median 347.5 stddev 84.5
+Connection time [ms]: connect 14.8
+Connection length [replies/conn]: 1.000
+
+Request rate: 307.4 req/s (3.3 ms/req)
+Request size [B]: 94.0
+
+Reply rate [replies/s]: min 0.0 avg 0.0 max 0.0 stddev 0.0 (0 samples)
+Reply time [ms]: response 209.5 transfer 99.7
+Reply size [B]: header 108.0 content 2.0 footer 0.0 (total 110.0)
+Reply status: 1xx=0 2xx=613 3xx=0 4xx=0 5xx=0
+
+CPU time [s]: user 0.26 system 1.74 (user 12.8% system 87.0% total 99.8%)
+Net I/O: 61.1 KB/s (0.5*10^6 bps)
+
+Errors: total 387 client-timo 324 socket-timo 0 connrefused 0 connreset 63
+Errors: fd-unavail 0 addrunavail 0 ftab-full 0 other 0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```

@@ -1,0 +1,104 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.3.2)
+    amq-client (0.9.4)
+      amq-protocol (>= 0.9.4)
+      eventmachine
+    amq-protocol (0.9.4)
+    amqp (0.9.7)
+      amq-client (~> 0.9.4)
+      amq-protocol (>= 0.9.4)
+      eventmachine
+    archive-tar-minitar (0.5.2)
+    async-rack (0.5.1)
+      rack (~> 1.1)
+    bson (1.6.4)
+    bson_ext (1.6.4)
+      bson (~> 1.6.4)
+    columnize (0.3.6)
+    debugger (1.2.0)
+      columnize (>= 0.3.1)
+      debugger-linecache (~> 1.1.1)
+      debugger-ruby_core_source (~> 1.1.3)
+    debugger-linecache (1.1.2)
+      debugger-ruby_core_source (>= 1.1.1)
+    debugger-ruby_core_source (1.1.3)
+    diff-lcs (1.1.3)
+    em-mongo (0.4.3)
+      bson (>= 1.1.3)
+      eventmachine (>= 0.12.10)
+    em-synchrony (1.0.2)
+      eventmachine (>= 1.0.0.beta.1)
+    em-websocket (0.3.8)
+      addressable (>= 2.1.1)
+      eventmachine (>= 0.12.9)
+    eventmachine (1.0.0.rc.4)
+    foreman (0.56.0)
+      thor (>= 0.13.6)
+    goliath (1.0.0)
+      async-rack
+      em-synchrony (>= 1.0.0)
+      em-websocket
+      eventmachine (>= 1.0.0.beta.4)
+      http_parser.rb (= 0.5.3)
+      log4r
+      multi_json
+      rack (>= 1.2.2)
+      rack-contrib
+      rack-respond_to
+    grape (0.2.1)
+      hashie (~> 1.2)
+      multi_json
+      multi_xml
+      rack
+      rack-mount
+    hashie (1.2.0)
+    http_parser.rb (0.5.3)
+    linecache19 (0.5.12)
+      ruby_core_source (>= 0.1.4)
+    log4r (1.1.10)
+    multi_json (1.3.6)
+    multi_xml (0.5.1)
+    rack (1.4.1)
+    rack-accept-media-types (0.9)
+    rack-contrib (1.1.0)
+      rack (>= 0.9.1)
+    rack-mount (0.8.3)
+      rack (>= 1.0.0)
+    rack-respond_to (0.9.8)
+      rack-accept-media-types (>= 0.6)
+    rspec (2.11.0)
+      rspec-core (~> 2.11.0)
+      rspec-expectations (~> 2.11.0)
+      rspec-mocks (~> 2.11.0)
+    rspec-core (2.11.1)
+    rspec-expectations (2.11.3)
+      diff-lcs (~> 1.1.3)
+    rspec-mocks (2.11.2)
+    ruby-debug-base19 (0.11.25)
+      columnize (>= 0.3.1)
+      linecache19 (>= 0.5.11)
+      ruby_core_source (>= 0.1.4)
+    ruby-debug19 (0.11.6)
+      columnize (>= 0.3.1)
+      linecache19 (>= 0.5.11)
+      ruby-debug-base19 (>= 0.11.19)
+    ruby_core_source (0.1.5)
+      archive-tar-minitar (>= 0.5.2)
+    thor (0.16.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  amqp
+  bson_ext
+  debugger
+  em-mongo
+  em-synchrony
+  foreman
+  goliath
+  grape
+  rspec
+  ruby-debug19
