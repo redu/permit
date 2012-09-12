@@ -1,0 +1,94 @@
+# About
+
+Server-side component for a distributed authorization system. Composed of an HTTP REST API and message bus (RabbitMQ) consumer.
+
+## Definitions and terminology
+
+The policy is the set of rules that determine what is allowed in the system. The mechanism is the set of software and/or hardware components that know how to enforce the policy in the system [1].
+
+The principle states that mechanism should be strictly separated and independent from the policy they enforce. This provides flexibility because:
+
+1. it makes the mechanisms reusable for diferent kinds of policies
+2. it allows policies to be reused for multiple systems
+3. it supports the evolution and analysis of policies over time.
+
+## REST API
+
+The main resource available in this webservice is the Rule. The policy is the set of rules that determine what is allowed in the system. In a cleaner language, a Policy is a set of rules that concern one resource.
+
+An Rule have the following schema:
+
+```json
+  {
+    "id" : 219839028,
+    "resource_id" : "core:course_1212",
+    "subject_id" : "core:user_4",
+    "actions" : {
+      "read" : true, "foo" : false
+    }
+  }
+```
+
+There is no schema on the property ``actions``. It depends only on the service needs.
+
+For example, if you want to know if the subject ``core:user_2`` is allowed to ``read`` the resource ``core:space_1`` just issue a GET request as follows:
+
+```sh
+permit > curl -H 'Accept: application/json' http://0.0.0.0:9000/rules/resource/core:space_1/subject/core:user_2/action/read -vv
+
+> GET /rules/resource/core:space_1/subject/core:user_2/action/read HTTP/1.1
+> User-Agent: curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5
+> Host: 0.0.0.0:9000
+> Accept: application/json
+>
+< HTTP/1.1 200 OK
+< Content-Type: application/json
+< Content-Length: 87
+< Server: Goliath
+< Date: Wed, 12 Sep 2012 10:51:14 GMT
+<
+[{"resource_id":"core:course_1212","subject_id":"core:user_4","actions":{"read":true}}]
+```
+
+Of course, in this case, the response body is useless. So you can issue a HEAD request to the same URL. If the response code is ``200`` the subject has ``read`` access to the resource, otherwise the status will be ``404``.
+
+Here is an example which denies the access to a resource:
+
+```sh
+permit > curl -X HEAD -H 'Accept: application/json' http://0.0.0.0:9000/rules/resource/core:space_1/subject/core:user_2/action/manage -vv
+
+> HEAD /rules/resource/core:space_1/subject/core:user_2/action/manage HTTP/1.1
+> User-Agent: curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5
+> Host: 0.0.0.0:9000
+> Accept: application/json
+>
+< HTTP/1.1 404 Not Found
+< Content-Type: application/json
+< Content-Length: 3
+< Server: Goliath
+< Date: Wed, 12 Sep 2012 11:07:26 GMT
+<
+```
+
+HEAD requests are slightly more performant than GET requests because there is no need to instantiate the records.
+
+You can also get all the Rules for a given resource:
+
+```sh
+permit > curl -H 'Accept: application/json' http://0.0.0.0:9000/rules/resource/core:space_1 -vv
+
+> GET /rules/resource/core:space_1 HTTP/1.1
+> User-Agent: curl/7.21.4 (universal-apple-darwin11.0) libcurl/7.21.4 OpenSSL/0.9.8r zlib/1.2.5
+> Host: 0.0.0.0:9000
+> Accept: application/json
+>
+< HTTP/1.1 200 OK
+< Content-Type: application/json
+< Content-Length: 263
+< Server: Goliath
+< Date: Wed, 12 Sep 2012 11:11:47 GMT
+<
+* Connection #0 to host 0.0.0.0 left intact
+* Closing connection #0
+[{"resource_id":"core:course_1212","subject_id":"core:user_4","actions":{"read":true}},{"resource_id":"core:course_1212","subject_id":"core:user_5","actions":{"manage":true}},{"resource_id":"core:course_1212","subject_id":"core:user_8","actions":{"manage":true}}]
+```
