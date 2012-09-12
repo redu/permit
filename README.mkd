@@ -92,3 +92,7 @@ permit > curl -H 'Accept: application/json' http://0.0.0.0:9000/rules/resource/c
 * Closing connection #0
 [{"resource_id":"core:course_1212","subject_id":"core:user_4","actions":{"read":true}},{"resource_id":"core:course_1212","subject_id":"core:user_5","actions":{"manage":true}},{"resource_id":"core:course_1212","subject_id":"core:user_8","actions":{"manage":true}}]
 ```
+
+## Running
+
+You just need to run the server with ``ruby server.rb -sv``
