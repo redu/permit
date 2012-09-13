@@ -101,3 +101,4 @@ You just need to run the server with ``ruby server.rb -sv``
 ## TODO
 
 - Define Rule better: it's not the correct representation of the entity. There is a schizophrenia about class vs. instance method and rule vs collection of rules.
+- More consistent arguments. For instance, ``rule.count(:actions => { :read => true })`` but the insert uses ``rule.insert(:action => :read)``.
