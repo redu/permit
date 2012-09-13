@@ -13,7 +13,7 @@ module Permit
         filter[:actions] = {}
         filter[:actions][params[:action]] = true
 
-        policy = Policy.new(filter.merge(:logger => env.logger, :db => env.db))
+        policy = Policy.new(filter.merge(:logger => env.logger))
         rules = policy.rules.count
 
         if rules > 0

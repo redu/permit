@@ -2,12 +2,15 @@ require 'spec_helper'
 
 module Permit
   describe Policy do
-    let(:db) do
-      EM::Mongo::Connection.new.db('permit_test')
+    before(:all) do
+      EventMachine.synchrony do
+        Permit::Connection.establish_connections(1, "test")
+        EM.stop
+      end
     end
-    let(:policy) { Policy.new(:db => db, :resource_id => 'r') }
+    let(:policy) { Policy.new(:resource_id => 'r') }
     let(:rules) do
-      db.collection("rules")
+      Permit::Connection.pool.collection("rules")
     end
 
     context "finders" do

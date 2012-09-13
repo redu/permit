@@ -9,3 +9,4 @@ end
 require 'permit/rule'
 require 'permit/policy'
 require 'permit/api'
+require 'permit/connection'

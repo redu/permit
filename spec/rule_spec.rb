@@ -2,8 +2,20 @@ require 'spec_helper'
 
 module Permit
   describe Rule do
+    before(:all) do
+      EventMachine.synchrony do
+        Permit::Connection.establish_connections(1, "test")
+        EM.stop
+      end
+    end
+    around do
+      EventMachine.synchrony do
+        rules.remove({})
+        EM.stop
+      end
+    end
     let(:db) do
-      EM::Mongo::Connection.new.db('permit_test')
+      Permit::Connection.pool
     end
     let(:rules) do
       db.collection("rules")
@@ -14,16 +26,10 @@ module Permit
         [{ :resource_id => "r", :subject_id => "s", :actions => { :a => true} },
          { :resource_id => "t", :subject_id => "s", :actions => { :a => true} }]
       end
-      around do
-        EventMachine.synchrony do
-          rules.remove({})
-          EM.stop
-        end
-      end
       it "should count data from db" do
         EventMachine.synchrony do
           rules.safe_insert(fixtures)
-          rule = Rule.new(:db => db, :resource_id => 'r')
+          rule = Rule.new(:resource_id => 'r')
           rule.count.should == 1
           EM.stop
         end
@@ -32,7 +38,7 @@ module Permit
       it "should find data from db" do
         EventMachine.synchrony do
           rules.safe_insert(fixtures)
-          rule = Rule.new(:db => db, :resource_id => 'r')
+          rule = Rule.new(:resource_id => 'r')
           rule.find.to_a == fixtures.first.to_a
           EM.stop
         end
@@ -42,7 +48,7 @@ module Permit
     context "inserts" do
       it "should insert rule" do
         EventMachine.synchrony do
-          rule = Rule.new(:db => db, :resource_id => 'r', :subject_id => 's')
+          rule = Rule.new(:resource_id => 'r', :subject_id => 's')
           rule.insert(:action => :read)
           rule.count(:actions => { :read => true }).should == 1
           EM.stop

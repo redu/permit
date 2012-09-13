@@ -1,5 +1,4 @@
 require 'em-synchrony/em-mongo'
 
-config['db'] = EM::Synchrony::ConnectionPool.new(:size => 3) do
-  connection = EM::Mongo::Connection.new.db('permit_development')
-end
+Permit::Connection.establish_connections(3, "development")
+config['db'] = Permit::Connection.pool

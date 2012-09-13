@@ -1,7 +1,11 @@
+require 'em-synchrony'
+require 'em-synchrony/em-mongo'
+
 module Permit
   class Rule
+
     def initialize(opts={})
-      @db = opts.delete(:db)
+      @db = Connection.pool
       @logger = opts.delete(:logger)
       @filter = opts
     end

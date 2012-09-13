@@ -1,7 +1,7 @@
 module Permit
   class Policy
     def initialize(opts={})
-      @db = opts.delete(:db)
+      @db = Connection.pool
       @logger = opts.delete(:logger)
       @filter = opts
     end
