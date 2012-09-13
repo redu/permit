@@ -15,6 +15,12 @@ module Permit
         [{ "resource_id" => "r", "subject_id" => "s", "actions" => { "a" => true} },
          { "resource_id" => "t", "subject_id" => "s", "actions" => { "a" => true} }]
       end
+      around do
+        EventMachine.synchrony do
+          rules.remove({})
+          EM.stop
+        end
+      end
       it "should return a instance of rule" do
         EventMachine.synchrony do
           policy.rules.should be_a Rule
@@ -24,7 +30,6 @@ module Permit
 
       it "should count the rules" do
         EventMachine.synchrony do
-          rules.remove({})
           rules.safe_insert(fixtures)
           policy.rules.count.should == 1
           EM.stop
@@ -33,7 +38,6 @@ module Permit
 
       it "should return a collection" do
         EventMachine.synchrony do
-          rules.remove({})
           rules.safe_insert(fixtures)
           policy.rules.find.should respond_to :map
           EM.stop
@@ -42,7 +46,6 @@ module Permit
 
       it "should retreive the rules theyselves" do
         EventMachine.synchrony do
-          rules.remove({})
           rules.safe_insert(fixtures)
           policy.rules.find.first["resource_id"].should == 'r'
           EM.stop

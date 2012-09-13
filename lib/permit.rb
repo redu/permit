@@ -1,5 +1,7 @@
 require 'bundler/setup'
 require 'goliath'
+require 'em-synchrony'
+require 'em-synchrony/em-mongo'
 
 module Permit
 end

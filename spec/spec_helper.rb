@@ -6,7 +6,6 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
 require 'permit'
-require 'em-synchrony/em-mongo'
 require 'debugger'
 
 RSpec.configure do |config|

@@ -14,9 +14,14 @@ module Permit
         [{ :resource_id => "r", :subject_id => "s", :actions => { :a => true} },
          { :resource_id => "t", :subject_id => "s", :actions => { :a => true} }]
       end
-      it "should count data from db" do
+      around do
         EventMachine.synchrony do
           rules.remove({})
+          EM.stop
+        end
+      end
+      it "should count data from db" do
+        EventMachine.synchrony do
           rules.safe_insert(fixtures)
           rule = Rule.new(:db => db, :resource_id => 'r')
           rule.count.should == 1
@@ -26,10 +31,20 @@ module Permit
 
       it "should find data from db" do
         EventMachine.synchrony do
-          rules.remove({})
           rules.safe_insert(fixtures)
           rule = Rule.new(:db => db, :resource_id => 'r')
           rule.find.to_a == fixtures.first.to_a
+          EM.stop
+        end
+      end
+    end
+
+    context "inserts" do
+      it "should insert rule" do
+        EventMachine.synchrony do
+          rule = Rule.new(:db => db, :resource_id => 'r', :subject_id => 's')
+          rule.insert(:action => :read)
+          rule.count(:actions => { :read => true }).should == 1
           EM.stop
         end
       end
