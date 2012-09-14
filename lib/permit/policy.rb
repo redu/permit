@@ -7,7 +7,7 @@ module Permit
     end
 
     def rules(args={})
-      opts = { :db => @db, :logger => @logger }.merge @filter.merge(args)
+      opts = { :logger => @logger }.merge @filter.merge(args)
       Rule.new(opts)
     end
   end

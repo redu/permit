@@ -5,7 +5,7 @@ module Permit
   class Rule
 
     def initialize(opts={})
-      @db = Connection.pool
+      @db = Connection.pool || opts.delete(:db)
       @logger = opts.delete(:logger)
       @filter = opts
     end
@@ -30,7 +30,7 @@ module Permit
 
       @logger.debug "Rule##{__method__} with #{document}" if @logger
 
-      @db.collection.safe_insert(document)
+      @db.collection('rules').safe_insert(document)
     end
   end
 end
