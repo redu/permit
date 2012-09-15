@@ -10,7 +10,7 @@ module Permit
       end
       it "should return a instance of rule" do
         EventMachine.synchrony do
-          Connection.establish_connections(1, "test")
+          Connection.establish_connections(1)
           rules = Connection.pool.collection("rules")
           policy = Policy.new(:resource_id => 'r')
           policy.rules.should be_a Rule
@@ -20,7 +20,7 @@ module Permit
 
       it "should count the rules" do
         EventMachine.synchrony do
-          Permit::Connection.establish_connections(1, "test")
+          Permit::Connection.establish_connections(1)
           rules = Permit::Connection.pool.collection("rules")
           rules.remove({})
           rules.safe_insert(fixtures)
@@ -33,7 +33,7 @@ module Permit
 
       it "should return a collection" do
         EventMachine.synchrony do
-          Permit::Connection.establish_connections(1, "test")
+          Permit::Connection.establish_connections(1)
           rules = Permit::Connection.pool.collection("rules")
           rules.remove({})
           rules.safe_insert(fixtures)
@@ -46,7 +46,7 @@ module Permit
 
       it "should retreive the rules theyselves" do
         EventMachine.synchrony do
-          Permit::Connection.establish_connections(1, "test")
+          Permit::Connection.establish_connections(1)
           rules = Permit::Connection.pool.collection("rules")
           rules.remove({})
           rules.safe_insert(fixtures)

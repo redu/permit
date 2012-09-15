@@ -9,7 +9,7 @@ module Permit
       end
       it "should count data from db" do
         EventMachine.synchrony do
-          Permit::Connection.establish_connections(1, "test")
+          Permit::Connection.establish_connections(1)
           rules = Permit::Connection.pool.collection('rules')
           rules.remove({})
           rules.safe_insert(fixtures)
@@ -22,7 +22,7 @@ module Permit
 
       it "should find data from db" do
         EventMachine.synchrony do
-          Permit::Connection.establish_connections(1, "test")
+          Permit::Connection.establish_connections(1)
           rules = Permit::Connection.pool.collection('rules')
           rules.remove({})
           rules.safe_insert(fixtures)
@@ -37,7 +37,7 @@ module Permit
     context "inserts" do
       it "should insert rule" do
         EventMachine.synchrony do
-          Permit::Connection.establish_connections(1, "test")
+          Permit::Connection.establish_connections(1)
           rules = Permit::Connection.pool.collection('rules')
           rule = Rule.new(:resource_id => 'r', :subject_id => 's')
           rules.remove({})

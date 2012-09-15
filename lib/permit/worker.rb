@@ -6,7 +6,7 @@ module Permit
       @consumer = opts[:consumer] || Consumer.new
       @exchange = opts[:exchange]
 
-      Permit::Connection.establish_connections(1, "development")
+      Permit::Connection.establish_connections(1)
     end
 
     def start
