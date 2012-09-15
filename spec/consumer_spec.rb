@@ -39,7 +39,7 @@ module Permit
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
         r = { :resource_id => 'r', :subject_id => 's', :actions => {:read => true} }
-        Permit::Consumer.new.handle_message({}, r)
+        Permit::Consumer.new.call({}, r)
         docs = rules.find({ :resource_id => 'r' })
         docs.first[:_id].should == r[:_id]
         rules.remove({})

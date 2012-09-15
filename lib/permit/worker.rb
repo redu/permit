@@ -12,6 +12,7 @@ module Permit
     def start
       @channel.queue(@queue_name, :exclusive => true) do |queue|
         queue.bind(@exchange, :routing_key => "permit.#").subscribe do |h,p|
+          p = JSON.parse(p, :symbolize_keys => true)
           @consumer.call(h,p)
         end
       end
