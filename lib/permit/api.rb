@@ -5,7 +5,12 @@ module Permit
     format :json
 
     resource :rules do
-      head 'resource/:resource_id/subject/:subject_id/action/:action' do
+      params do
+        requires :resource_id, :type => String
+        requires :subject_id, :type => String
+        requires :action, :type => String
+      end
+      head '/' do
         env.logger.info params
         filter = {}
         filter[:resource_id] = params[:resource_id] if params[:resource_id]
