@@ -14,7 +14,10 @@ module Permit
         Permit::Connection.establish_connections(1)
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
-        Permit::Consumer.new.call({}, { :resource_id => 'r', :subject_id => 's', :actions => {:read => true} })
+        rule = \
+          { :resource_id => 'r', :subject_id => 's', :actions => {:read => true} }
+        event = { :name => "create", :payload => rule}
+        Permit::Consumer.new.call({}, event)
         rules.count.should == 1
         rules.remove({})
         EM.stop
@@ -26,7 +29,11 @@ module Permit
         Permit::Connection.establish_connections(1)
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
-        Permit::Consumer.new.call({}, { :resource_id => 'r', :subject_id => 's', :actions => {:read => true, :foo => true} })
+        rule = \
+          { :resource_id => 'r', :subject_id => 's',
+            :actions => {:read => true, :foo => true } }
+        event = { :name => "create", :payload => rule}
+        Permit::Consumer.new.call({}, event)
         rules.count.should == 2
         rules.remove({})
         EM.stop
@@ -39,7 +46,8 @@ module Permit
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
         r = { :resource_id => 'r', :subject_id => 's', :actions => {:read => true} }
-        Permit::Consumer.new.call({}, r)
+        event = { :name => 'create', :payload => r }
+        Permit::Consumer.new.call({}, event)
         docs = rules.find({ :resource_id => 'r' })
         docs.first[:_id].should == r[:_id]
         rules.remove({})

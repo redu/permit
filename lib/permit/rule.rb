@@ -3,11 +3,16 @@ require 'em-synchrony/em-mongo'
 
 module Permit
   class Rule
+    VALID_EVENTS = %w(create remove)
 
     def initialize(opts={})
       @db = Connection.pool || opts.delete(:db)
       @logger = opts.delete(:logger)
       @filter = opts
+    end
+
+    def self.valid_events
+      VALID_EVENTS
     end
 
     def find(opts={})
@@ -20,7 +25,7 @@ module Permit
       find(@filter.merge(opts)).count
     end
 
-    def insert(opts={})
+    def create(opts={})
       attr = @filter.merge(opts)
       document = {}
       document[:resource_id] = attr[:resource_id] if attr[:resource_id]
@@ -30,7 +35,7 @@ module Permit
 
       @logger.debug "Rule##{__method__} with #{document}" if @logger
 
-      @db.collection('rules').safe_insert(document)
+      @db.collection('rules').insert(document)
     end
   end
 end

@@ -13,10 +13,10 @@ AMQP.start do |connection|
                                 :exchange => exchange)
     worker.start
 
-    EM::add_periodic_timer do
-      exchange.publish({:resource_id => 'r', :subject_id => 's',
-                        :actions => { :read => true } }.to_json,
-                        :routing_key => "permit.core")
-    end
+    # EM::add_periodic_timer do
+    #   @exchange.publish({:resource_id => 'r', :subject_id => 's',
+    #                     :actions => { :read => true } }.to_json,
+    #                     :routing_key => "permit.core")
+    # end
   end
 end

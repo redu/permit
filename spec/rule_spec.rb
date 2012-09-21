@@ -34,6 +34,10 @@ module Permit
       end
     end
 
+    it "should have valid events" do
+      Rule.valid_events.should == %w(create remove)
+    end
+
     context "inserts" do
       it "should insert rule" do
         EventMachine.synchrony do
@@ -41,7 +45,7 @@ module Permit
           rules = Permit::Connection.pool.collection('rules')
           rule = Rule.new(:resource_id => 'r', :subject_id => 's')
           rules.remove({})
-          rule.insert(:action => :read)
+          rule.create(:action => :read)
           rule.count(:actions => { :read => true }).should == 1
           rules.remove({})
           EM.stop
