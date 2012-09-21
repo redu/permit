@@ -5,6 +5,7 @@ require 'yajl/json_gem'
 AMQP.start do |connection|
 
   EventMachine.synchrony do
+    Goliath.env = :development
     channel  = AMQP::Channel.new(connection)
     exchange = channel.topic("permit", :auto_delete => true)
     consumer = Permit::Consumer.new
