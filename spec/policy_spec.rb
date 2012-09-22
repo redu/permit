@@ -8,53 +8,47 @@ module Permit
         [{ "resource_id" => "r", "subject_id" => "s", "actions" => { "a" => true} },
          { "resource_id" => "t", "subject_id" => "s", "actions" => { "a" => true} }]
       end
-      it "should return a instance of rule" do
-        EventMachine.synchrony do
-          Connection.establish_connections(1)
-          rules = Connection.pool.collection("rules")
-          policy = Policy.new(:resource_id => 'r')
-          policy.rules.should be_a Rule
-          EM.stop
-        end
+    end
+
+    it "should be initialized with a resource" do
+      Policy.new(:resource_id => 'r').should be_a Policy
+    end
+
+    context "rules" do
+      it "should have rules" do
+        c = double('Collection')
+        Policy.new(:resource_id => 'r').should respond_to :rules
       end
 
-      it "should count the rules" do
-        EventMachine.synchrony do
-          Permit::Connection.establish_connections(1)
-          rules = Permit::Connection.pool.collection("rules")
-          rules.remove({})
-          rules.safe_insert(fixtures)
-          policy = Policy.new(:resource_id => 'r')
-          policy.rules.count.should == 1
-          rules.remove({})
-          EM.stop
-        end
+      it "should find rules" do
+        c = double('Collection')
+        c.should_receive(:find).with(:resource_id => 'r', :subject_id => 's')
+        Policy.new(:resource_id => 'r', :collection => c).rules(:subject_id => 's')
       end
+    end
 
-      it "should return a collection" do
-        EventMachine.synchrony do
-          Permit::Connection.establish_connections(1)
-          rules = Permit::Connection.pool.collection("rules")
-          rules.remove({})
-          rules.safe_insert(fixtures)
-          policy = Policy.new(:resource_id => 'r')
-          policy.rules.find.should respond_to :map
-          rules.remove({})
-          EM.stop
-        end
+    context  "inserting" do
+      let(:coll) { double('Collection') }
+      it "should insert rules" do
+        coll.should_receive(:update).
+          with({ :resource_id => 'r', :subject_id => 's' },
+                 {"$set" => { "actions.read" => true }},
+                 {:upsert => true})
+        policy = Policy.new(:resource_id => 'r', :collection => coll)
+        policy.create(:subject_id => 's', :actions => { :read => true })
       end
+    end
 
-      it "should retreive the rules theyselves" do
-        EventMachine.synchrony do
-          Permit::Connection.establish_connections(1)
-          rules = Permit::Connection.pool.collection("rules")
-          rules.remove({})
-          rules.safe_insert(fixtures)
-          policy = Policy.new(:resource_id => 'r')
-          policy.rules.find.first["resource_id"].should == 'r'
-          rules.remove({})
-          EM.stop
-        end
+    context "removing" do
+      let(:coll) { double('Collection') }
+      it "should remove rule" do
+        coll.should_receive(:update).
+          with({ :resource_id => 'r', :subject_id => 's' },
+                 {"$unset" => { "actions.read" => true }},
+                 {:upsert => true})
+
+        policy = Policy.new(:resource_id => 'r', :collection => coll)
+        policy.remove(:subject_id => 's', :actions => { :read => true })
       end
     end
   end

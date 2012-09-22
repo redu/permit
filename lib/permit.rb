@@ -9,7 +9,6 @@ end
 require 'permit/config'
 require 'permit/connection'
 require 'permit/consumer'
-require 'permit/rule'
 require 'permit/policy'
 require 'permit/worker'
 require 'permit/api'

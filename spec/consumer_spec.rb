@@ -34,7 +34,7 @@ module Permit
             :actions => {:read => true, :foo => true } }
         event = { :name => "create", :payload => rule}
         Permit::Consumer.new.call({}, event)
-        rules.count.should == 2
+        rules.count.should == 1
         rules.remove({})
         EM.stop
       end
