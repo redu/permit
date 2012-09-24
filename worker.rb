@@ -8,6 +8,7 @@ AMQP.start do |connection|
     Goliath.env = :development
     channel  = AMQP::Channel.new(connection)
     exchange = channel.topic("permit", :auto_delete => true)
+    Permit::Config.logger(Logger.new(STDOUT))
     consumer = Permit::Consumer.new
     worker = Permit::Worker.new(:consumer => consumer, :channel => channel,
                                 :exchange => exchange)
