@@ -50,6 +50,16 @@ module Permit
         policy = Policy.new(:resource_id => 'r', :collection => coll)
         policy.remove(:subject_id => 's', :actions => { :read => true })
       end
+
+      it "should remove the rule without action" do
+        coll.should_receive(:update).
+          with({ :resource_id => 'r', :subject_id => 's' },
+                 {"$unset" => { "actions" => true }},
+                 {:upsert => true})
+
+        policy = Policy.new(:resource_id => 'r', :collection => coll)
+        policy.remove(:subject_id => 's')
+      end
     end
   end
 end

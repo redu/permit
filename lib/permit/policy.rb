@@ -35,6 +35,8 @@ module Permit
 
     # Converts { :read => true } to { "actions.read" => true }
     def dot_notation(actions)
+      return { "actions" => true } unless actions
+
       actions.reduce({}) do |acc, (key, value)|
         acc["actions.#{key}"] = value
         acc
