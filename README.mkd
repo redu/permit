@@ -103,3 +103,16 @@ You just need to run the server with ``ruby server.rb -sv``
 - Define Rule better: it's not the correct representation of the entity. There is a schizophrenia about class vs. instance method and rule vs collection of rules.
 - More consistent arguments. For instance, ``rule.count(:actions => { :read => true })`` but the insert uses ``rule.insert(:action => :read)``.
 - Use HTTP Basic Auth
+<img src="https://github.com/downloads/redu/redupy/redutech-marca.png" alt="Redu Educational Technologies" width="300">
+
+Este projeto é financiado e mantido pelo [Redu Educational Techologies](http://tech.redu.com.br).
+
+## Copyright
+
+Copyright (c) 2012 Redu Educational Technologies
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
