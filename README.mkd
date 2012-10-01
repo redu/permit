@@ -107,7 +107,7 @@ You just need to run the server with ``ruby server.rb -sv``
  
 <img src="https://github.com/downloads/redu/redupy/redutech-marca.png" alt="Redu Educational Technologies" width="300">
 
-Este projeto é financiado e mantido pelo [Redu Educational Techologies](http://tech.redu.com.br).
+ is maintained and funded by [Redu Educational Techologies](http://tech.redu.com.br).
 
 ## Copyright
 
