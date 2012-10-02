@@ -1,6 +1,8 @@
 # About
 
-Server-side component for a distributed authorization system. Composed of an HTTP REST API and message bus (RabbitMQ) consumer.
+Auhtorization for distributed systems. It provides the infrastructure to create, store and enforce access policy to resources distributed across many web services. This is the server-side component composed by an HTTP REST API and message bus consumer. There is also a [client-side component](http://github.com.br/permit-gem) written in Ruby.
+
+This project is in alpha mode and should be not used in production yet.
 
 ## Definitions and terminology
 
@@ -97,6 +99,9 @@ permit > curl -H 'Accept: application/json' http://0.0.0.0:9000/rules?resource_i
 
 You just need to run the server with ``ruby server.rb -sv``
 
+## Internals
+
+The REST API is build on top of [Goliath](https://github.com/postrank-labs/goliath), [Grape](https://github.com/intridea/grape) and [em-mongo](https://github.com/bcg/em-mongo).
 
 ## TODO
 
