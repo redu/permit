@@ -4,6 +4,8 @@ Auhtorization for distributed systems. It provides the infrastructure to create,
 
 This project is in alpha mode and should be not used in production yet.
 
+[![Build Status](https://travis-ci.org/redu/permit.png)](https://travis-ci.org/redu/permit)
+
 ## Definitions and terminology
 
 The policy is the set of rules that determine what is allowed in the system. The mechanism is the set of software and/or hardware components that know how to enforce the policy in the system [1].

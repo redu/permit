@@ -8,6 +8,7 @@ gem 'em-synchrony'
 gem 'bson_ext'
 gem 'amqp'
 gem 'yajl-ruby'
+gem 'rake'
 
 group :development, :test do
   gem 'rspec'
