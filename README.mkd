@@ -101,6 +101,20 @@ permit > curl -H 'Accept: application/json' http://0.0.0.0:9000/rules?resource_i
 
 You just need to run the server with ``ruby server.rb -sv``
 
+### Deploy
+
+In order to deploy on heroku you should enable some MongoDB addon and set environment variables:
+
+```sh
+permit > heroku config:set MONGO_HOST=<host>
+permit > heroku config:set MONGO_PORT=<port>
+permit > heroku config:set MONGO_DB_NAME=<db name>
+permit > heroku config:set MONGO_USER=<user>
+permit > heroku config:set MONGO_PASS=<passoword>
+```
+
+Replace ``<value>`` with the proper value given by your MongoDB host.
+
 ## Internals
 
 The REST API is build on top of [Goliath](https://github.com/postrank-labs/goliath), [Grape](https://github.com/intridea/grape) and [em-mongo](https://github.com/bcg/em-mongo).
@@ -111,7 +125,7 @@ The REST API is build on top of [Goliath](https://github.com/postrank-labs/golia
 - More consistent arguments. For instance, ``rule.count(:actions => { :read => true })`` but the insert uses ``rule.insert(:action => :read)``.
 - Use HTTP Basic Auth
 
- 
+
 <img src="https://github.com/downloads/redu/redupy/redutech-marca.png" alt="Redu Educational Technologies" width="300">
 
 This project is maintained and funded by [Redu Educational Techologies](http://tech.redu.com.br).

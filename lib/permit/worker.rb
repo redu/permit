@@ -6,6 +6,14 @@ module Permit
       @consumer = opts[:consumer] || Consumer.new
       @exchange = opts[:exchange]
 
+      db_conf = {
+        :host => ENV['MONGO_HOST'] || "127.0.0.1",
+        :port => ENV['MONGO_PORT'] || "27017",
+        :user => ENV['MONGO_USER'],
+        :pass => ENV['MONGO_PASS'],
+        :db_name => ENV['MONGO_DB_NAME'] || "permit_#{Goliath.env}"
+      }
+
       Permit::Connection.establish_connections(1)
       Config.logger.info "Worker initialized and listening"
     end
