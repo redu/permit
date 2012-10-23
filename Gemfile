@@ -9,6 +9,7 @@ gem 'bson_ext'
 gem 'amqp'
 gem 'yajl-ruby'
 gem 'rake'
+gem 'configurable'
 
 group :development, :test do
   gem 'rspec'

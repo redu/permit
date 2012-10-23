@@ -1,14 +1,14 @@
 require 'em-synchrony/em-mongo'
 
-Permit::Config.logger
+$stdout.sync = true
 
-db_conf = {
-  :host => ENV['MONGO_HOST'] || "127.0.0.1",
-  :port => ENV['MONGO_PORT'] || "27017",
-  :user => ENV['MONGO_USER'],
-  :pass => ENV['MONGO_PASS'],
-  :db_name => ENV['MONGO_DB_NAME'] || "permit_#{Goliath.env}"
-}
+Permit.configure do |c|
+  if Goliath.env?(:devel) || Goliath.env?(:test)
+    dirname = "#{File.dirname(__FILE__)}/logs"
+    File.mkdir dirname unless File.exists?(dirname)
+    c.logger = Logger.new("#{dirname}/#{Goliath.env}.log")
+  end
+end
 
-Permit::Connection.establish_connections(db_conf, 3)
+Permit::Connection.establish_connections
 config['db'] = Permit::Connection.pool

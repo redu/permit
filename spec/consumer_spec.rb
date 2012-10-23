@@ -2,16 +2,6 @@ require 'spec_helper'
 
 module Permit
   describe Consumer do
-    let(:db_conf) do
-      db_conf = {
-        :host => ENV['MONGO_HOST'] || "127.0.0.1",
-        :port => ENV['MONGO_PORT'] || "27017",
-        :user => ENV['MONGO_USER'],
-        :pass => ENV['MONGO_PASS'],
-        :db_name => ENV['MONGO_DB_NAME'] || "permit_#{Goliath.env}"
-      }
-    end
-
     it "should respondo to #call" do
       EventMachine.synchrony do
         Permit::Consumer.new.should respond_to :call
@@ -21,7 +11,7 @@ module Permit
 
     it "should insert rules" do
       EventMachine.synchrony do
-        Permit::Connection.establish_connections(db_conf, 1)
+        Permit::Connection.establish_connections
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
         rule = \
@@ -36,7 +26,7 @@ module Permit
 
     it "should insert multiple actions" do
       EventMachine.synchrony do
-        Permit::Connection.establish_connections(db_conf, 1)
+        Permit::Connection.establish_connections
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
         rule = \
@@ -52,7 +42,7 @@ module Permit
 
     it "should insert the rules correctly" do
       EventMachine.synchrony do
-        Permit::Connection.establish_connections(db_conf, 1)
+        Permit::Connection.establish_connections
         rules = Permit::Connection.pool.collection('rules')
         rules.remove({})
         r = { :resource_id => 'r', :subject_id => 's', :actions => {:read => true} }

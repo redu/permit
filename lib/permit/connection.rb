@@ -1,20 +1,24 @@
 module Permit
   class Connection
-    def self.establish_connections(db_conf, pool_size, environment=Goliath.env)
-      @host = db_conf[:host]
-      @port = db_conf[:port]
-      @db_name = db_conf[:db_name]
+    def self.establish_connections
+      @host = Permit.config.db.host
+      @port = Permit.config.db.port
+      @db_name = Permit.config.db.db_name
       @opts = { :recconnect_in => 1 }
-      @opts[:user] = db_conf[:user] if db_conf[:user]
-      @opts[:password] = db_conf[:pass] if db_conf[:pass]
+      @user = Permit.config.db.user if Permit.config.db.user
+      @password = Permit.config.db.pass if Permit.config.db.pass
 
-      @@connections = EM::Synchrony::ConnectionPool.new(:size => pool_size) do
-        conn = EM::Mongo::Connection.new(@host, @port, 1, @opts).db(@db_name)
+      @@conns = \
+        EM::Synchrony::ConnectionPool.new(:size => Permit.config.db.pool_size) do
+        conn = EM::Mongo::Connection.new(@host, @port, 1, @opts)
+        db = conn.db(@db_name)
+        db.authenticate(@user, @password) if @user && @password
+        db
       end
     end
 
     def self.pool
-      @@connections
+      @@conns
     end
   end
 end
