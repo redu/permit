@@ -13,4 +13,5 @@ gem 'rake'
 group :development, :test do
   gem 'rspec'
   gem 'debugger'
+  gem 'foreman'
 end
