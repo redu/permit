@@ -5,7 +5,7 @@ $stdout.sync = true
 Permit.configure do |c|
   if Goliath.env?(:devel) || Goliath.env?(:test)
     dirname = "#{File.dirname(__FILE__)}/logs"
-    File.mkdir dirname unless File.exists?(dirname)
+    Dir.mkdir dirname unless File.exists?(dirname)
     c.logger = Logger.new("#{dirname}/#{Goliath.env}.log")
   end
 end
