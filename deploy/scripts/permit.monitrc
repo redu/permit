@@ -1,0 +1,3 @@
+check process permit with pidfile /data/permit/current/tmp/permit.pid
+  start = "/etc/monit.d/permit_app_wrapper.sh start" as uid deploy and gid deploy
+  stop = "/etc/monit.d/permit_app_wrapper.sh stop" as uid deploy and gid deploy
