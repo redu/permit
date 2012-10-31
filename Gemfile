@@ -10,6 +10,7 @@ gem 'amqp'
 gem 'yajl-ruby'
 gem 'rake'
 gem 'configurable'
+gem 'daemons'
 
 group :development, :test do
   gem 'rspec'

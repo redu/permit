@@ -33,6 +33,7 @@ GEM
     configurable (1.0.0)
       config_parser (~> 0.5.4)
       lazydoc (~> 1.0)
+    daemons (1.1.9)
     debugger (1.2.0)
       columnize (>= 0.3.1)
       debugger-linecache (~> 1.1.1)
@@ -98,6 +99,7 @@ DEPENDENCIES
   amqp
   bson_ext
   configurable
+  daemons
   debugger
   em-mongo
   em-synchrony

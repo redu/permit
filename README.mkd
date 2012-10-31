@@ -99,7 +99,13 @@ permit > curl -H 'Accept: application/json' http://0.0.0.0:9000/rules?resource_i
 
 ## Running
 
+### Server
+
 You just need to run the server with ``ruby server.rb -sv``
+
+### AMQP Consumer
+
+``bundle exec ruby worker.rb`` or, as a daemon, ``bundle exec permitd.rb start``
 
 ### Deploy
 
