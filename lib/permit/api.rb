@@ -1,3 +1,4 @@
+require 'goliath'
 require 'grape'
 
 module Permit
