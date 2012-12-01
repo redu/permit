@@ -1,6 +1,6 @@
 # About
 
-Auhtorization for distributed systems. It provides the infrastructure to create, store and enforce access policy to resources distributed across many web services. This is the server-side component composed by an HTTP REST API and message bus consumer. There is also a [client-side component](http://github.com.br/permit-gem) written in Ruby.
+Auhtorization for distributed systems. It provides the infrastructure to create, store and enforce access policy to resources distributed across many web services. This is the server-side component composed by an HTTP REST API and message bus consumer. There is also a [client-side component](https://github.com/redu/permit-gem) written in Ruby.
 
 This project is in alpha mode and should be not used in production yet.
 
